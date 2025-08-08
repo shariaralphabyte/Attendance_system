@@ -73,44 +73,44 @@ class _QuickActionCardState extends State<QuickActionCard>
             onTapDown: _onTapDown,
             onTapUp: _onTapUp,
             onTapCancel: _onTapCancel,
-            child: Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: widget.gradient,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: widget.gradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppTheme.cardShadows,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: widget.onTap,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: AppTheme.cardShadows,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    onTap: widget.onTap,
-                    borderRadius: BorderRadius.circular(16),
-                    splashColor: Colors.white.withOpacity(0.1),
-                    highlightColor: Colors.white.withOpacity(0.05),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Icon
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              widget.icon,
-                              color: Colors.white,
-                              size: 28,
-                            ),
+                  splashColor: Colors.white.withOpacity(0.1),
+                  highlightColor: Colors.white.withOpacity(0.05),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icon
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-              
-                          const Spacer(),
-              
-                          // Text content
-                          Column(
+                          child: Icon(
+                            widget.icon,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // Text content
+                        Flexible( // Wrap with Flexible
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
@@ -120,6 +120,8 @@ class _QuickActionCardState extends State<QuickActionCard>
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -129,11 +131,13 @@ class _QuickActionCardState extends State<QuickActionCard>
                                   color: Colors.white.withOpacity(0.8),
                                   fontWeight: FontWeight.w500,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

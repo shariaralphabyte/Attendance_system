@@ -601,10 +601,10 @@ packages:
     dependency: "direct main"
     description:
       name: ultra_qr_scanner
-      sha256: f344e26845ed85c529b942f0dd432bacf90685828089e8f6effae552ed338060
+      sha256: "4b80b8b4dc5cd74e599d3b21f443f671b1326f4ce40d3029346c989923e81c63"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "3.0.0"
   url_launcher_linux:
     dependency: transitive
     description:

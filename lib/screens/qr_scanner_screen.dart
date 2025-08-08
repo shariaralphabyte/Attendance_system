@@ -46,7 +46,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     _pulseController.repeat(reverse: true);
   }
 
-  Future<void> _handleQRDetected(String qrCode) async {
+  Future<void> _handleQRDetected(String qrCode , String type) async {
     final now = DateTime.now();
 
     // Prevent duplicate or too frequent scans (2 seconds cooldown)
@@ -234,7 +234,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
           // QR Scanner Widget
           Positioned.fill(
             child: UltraQrScannerWidget(
-              onQrDetected: _handleQRDetected,
+              onCodeDetected: _handleQRDetected,
               showFlashToggle: true,
               autoStop: false,
               showStartStopButton: false,
