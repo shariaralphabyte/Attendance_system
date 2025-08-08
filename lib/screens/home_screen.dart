@@ -6,9 +6,11 @@ import '../utils/database_helper.dart';
 import '../models/user_model.dart';
 import 'add_user_screen.dart';
 import 'attendance_list_screen.dart';
+import 'biometric_auth_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'settings_screen.dart';
 import 'user_list_screen.dart';
+import '../utils/database_helper.dart';
 import '../widgets/permission_dialog.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/quick_action_card.dart';
@@ -165,7 +167,54 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
       ),
     );
-  }
+ }
+
+ void _navigateToBiometricAuth() async {
+   // Get all users to allow selection
+   final users = await DatabaseHelper.instance.getAllUsers();
+   
+   if (users.isEmpty) {
+     if (mounted) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(
+           content: Text('No employees found. Please add employees first.'),
+           backgroundColor: AppTheme.errorColor,
+         ),
+       );
+     }
+     return;
+   }
+   
+   // For now, we'll just use the first user as an example
+   // In a real implementation, you would show a user selection dialog
+   final user = users.first;
+   
+   if (mounted) {
+     Navigator.push(
+       context,
+       PageRouteBuilder(
+         pageBuilder: (context, animation, _) => BiometricAuthScreen(
+           user: user,
+           onAttendanceMarked: _loadDashboardData,
+         ),
+         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+           const begin = Offset(0.0, 1.0);
+           const end = Offset.zero;
+           const curve = Curves.easeInOut;
+           
+           var tween = Tween(begin: begin, end: end).chain(
+             CurveTween(curve: curve),
+           );
+           
+           return SlideTransition(
+             position: animation.drive(tween),
+             child: child,
+           );
+         },
+       ),
+     );
+   }
+ }
 
   @override
   void dispose() {
@@ -388,10 +437,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               onTap: _checkCameraPermission,
             ),
             QuickActionCard(
+              title: 'Biometric Auth',
+              subtitle: 'Mark attendance',
+              icon: Icons.fingerprint,
+              gradient: AppTheme.accentGradient,
+              onTap: _navigateToBiometricAuth,
+            ),
+            QuickActionCard(
               title: 'Add User',
               subtitle: 'Register new employee',
               icon: Icons.person_add,
-              gradient: AppTheme.accentGradient,
+              gradient: AppTheme.secondaryGradient,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AddUserScreen()),
@@ -401,25 +457,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               title: 'View Users',
               subtitle: 'Manage employees',
               icon: Icons.group,
-              gradient: AppTheme.secondaryGradient,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const UserListScreen()),
-              ),
-            ),
-            QuickActionCard(
-              title: 'Attendance Log',
-              subtitle: 'View all records',
-              icon: Icons.history,
               gradient: LinearGradient(
                 colors: [Colors.orange.shade400, Colors.orange.shade600],
               ),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AttendanceListScreen()),
+                MaterialPageRoute(builder: (context) => const UserListScreen()),
               ),
-            ),
-          ],
+           QuickActionCard(
+             title: 'Attendance Log',
+             subtitle: 'View all records',
+             icon: Icons.history,
+             gradient: LinearGradient(
+               colors: [Colors.orange.shade400, Colors.orange.shade600],
+             ),
+             onTap: () => Navigator.push(
+               context,
+               MaterialPageRoute(builder: (context) => const AttendanceListScreen()),
+             ),
+           ),
+         ],
         ),
       ],
     );
