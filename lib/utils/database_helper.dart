@@ -18,68 +18,106 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, filePath);
+      
+      print('Initializing database at: $path');
+      
+      return await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDB,
+        onOpen: (db) async {
+          print('Database opened successfully');
+          // Verify tables exist
+          await _verifyTables(db);
+        },
+      );
+    } catch (e) {
+      print('Error initializing database: $e');
+      rethrow;
+    }
+  }
+  
+  Future<void> _verifyTables(Database db) async {
+    try {
+      // Check if tables exist by querying them
+      await db.query('users', limit: 1);
+      await db.query('attendance', limit: 1);
+      await db.query('settings', limit: 1);
+      print('All tables verified successfully');
+    } catch (e) {
+      print('Error verifying tables: $e');
+      // If tables don't exist, try to create them
+      await _createDB(db, 1);
+    }
   }
 
   Future _createDB(Database db, int version) async {
-    // Users table
-    await db.execute('''
-      CREATE TABLE users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        employeeId TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        department TEXT NOT NULL,
-        position TEXT NOT NULL,
-        phone TEXT,
-        profileImage TEXT,
-        isSystemGenerated INTEGER DEFAULT 0, -- 0 = false, 1 = true
-        createdAt TEXT NOT NULL
-      )
-    ''');
+    try {
+      print('Creating database tables...');
+      
+      // Users table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS users(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          employeeId TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          department TEXT NOT NULL,
+          position TEXT NOT NULL,
+          phone TEXT,
+          profileImage TEXT,
+          isSystemGenerated INTEGER DEFAULT 0, -- 0 = false, 1 = true
+          createdAt TEXT NOT NULL
+        )
+      ''');
+      print('Users table created successfully');
 
-    // Attendance table
-    await db.execute('''
-      CREATE TABLE attendance(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        employeeId TEXT NOT NULL,
-        date TEXT NOT NULL,
-        checkInTime TEXT NOT NULL,
-        checkOutTime TEXT,
-        status TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        FOREIGN KEY (employeeId) REFERENCES users (employeeId),
-        UNIQUE(employeeId, date)
-      )
-    ''');
+      // Attendance table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS attendance(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          employeeId TEXT NOT NULL,
+          date TEXT NOT NULL,
+          checkInTime TEXT NOT NULL,
+          checkOutTime TEXT,
+          status TEXT NOT NULL,
+          createdAt TEXT NOT NULL,
+          FOREIGN KEY (employeeId) REFERENCES users (employeeId),
+          UNIQUE(employeeId, date)
+        )
+      ''');
+      print('Attendance table created successfully');
 
-    // Settings table
-    await db.execute('''
-      CREATE TABLE settings(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lateTime TEXT NOT NULL DEFAULT '09:00:00',
-        workingStartTime TEXT NOT NULL DEFAULT '09:00:00',
-        gracePeriodMinutes INTEGER NOT NULL DEFAULT 0,
-        isSystemGeneratedIdEnabled INTEGER NOT NULL DEFAULT 1, -- 0 = false, 1 = true
-        idFormat TEXT NOT NULL DEFAULT 'DEPTYYMMDD###',
-        isBiometricEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
-        isDualAuthEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
-        createdAt TEXT NOT NULL,
-        updatedAt TEXT NOT NULL
-      )
-    ''');
+      // Settings table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS settings(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          lateTime TEXT NOT NULL DEFAULT '09:00:00',
+          workingStartTime TEXT NOT NULL DEFAULT '09:00:00',
+          gracePeriodMinutes INTEGER NOT NULL DEFAULT 0,
+          isSystemGeneratedIdEnabled INTEGER NOT NULL DEFAULT 1, -- 0 = false, 1 = true
+          idFormat TEXT NOT NULL DEFAULT 'DEPTYYMMDD###',
+          isBiometricEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+          isDualAuthEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      print('Settings table created successfully');
 
-    // Create indexes for better performance
-    await db.execute('CREATE INDEX idx_employee_id ON users(employeeId)');
-    await db.execute('CREATE INDEX idx_attendance_employee ON attendance(employeeId)');
-    await db.execute('CREATE INDEX idx_attendance_date ON attendance(date)');
+      // Create indexes for better performance
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_employee_id ON users(employeeId)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_attendance_employee ON attendance(employeeId)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date)');
+      
+      print('Database indexes created successfully');
+    } catch (e) {
+      print('Error creating database tables: $e');
+      rethrow;
+    }
   }
 
   // User CRUD Operations
@@ -88,7 +126,33 @@ class DatabaseHelper {
     try {
       return await db.insert('users', user.toMap());
     } catch (e) {
-      throw Exception('Failed to insert user: $e');
+      print('Failed to insert user: $e');
+      // Check if it's a unique constraint error
+      if (e.toString().contains('UNIQUE constraint failed')) {
+        throw Exception('Employee ID already exists. Please use a different ID.');
+      }
+      // Try to recreate the table if it doesn't exist
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employeeId TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            department TEXT NOT NULL,
+            position TEXT NOT NULL,
+            phone TEXT,
+            profileImage TEXT,
+            isSystemGenerated INTEGER DEFAULT 0, -- 0 = false, 1 = true
+            createdAt TEXT NOT NULL
+          )
+        ''');
+        // Try inserting again
+        return await db.insert('users', user.toMap());
+      } catch (e2) {
+        print('Failed to recreate users table: $e2');
+        throw Exception('Failed to insert user: $e');
+      }
     }
   }
 
@@ -114,12 +178,43 @@ class DatabaseHelper {
 
   Future<int> updateUser(UserModel user) async {
     final db = await instance.database;
-    return await db.update(
-      'users',
-      user.toMap(),
-      where: 'employeeId = ?',
-      whereArgs: [user.employeeId],
-    );
+    try {
+      return await db.update(
+        'users',
+        user.toMap(),
+        where: 'employeeId = ?',
+        whereArgs: [user.employeeId],
+      );
+    } catch (e) {
+      print('Failed to update user: $e');
+      // Try to recreate the table if it doesn't exist
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employeeId TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            department TEXT NOT NULL,
+            position TEXT NOT NULL,
+            phone TEXT,
+            profileImage TEXT,
+            isSystemGenerated INTEGER DEFAULT 0, -- 0 = false, 1 = true
+            createdAt TEXT NOT NULL
+          )
+        ''');
+        // Try updating again
+        return await db.update(
+          'users',
+          user.toMap(),
+          where: 'employeeId = ?',
+          whereArgs: [user.employeeId],
+        );
+      } catch (e2) {
+        print('Failed to recreate users table for update: $e2');
+        rethrow;
+      }
+    }
   }
 
   Future<int> deleteUser(String employeeId) async {
@@ -236,28 +331,70 @@ class DatabaseHelper {
   }
 
   Future<SettingsModel?> getSettings() async {
-    final db = await instance.database;
-    final maps = await db.query('settings', limit: 1);
-    
-    if (maps.isNotEmpty) {
-      return SettingsModel.fromMap(maps.first);
+    try {
+      final db = await instance.database;
+      final maps = await db.query('settings', limit: 1);
+      
+      if (maps.isNotEmpty) {
+        return SettingsModel.fromMap(maps.first);
+      }
+      
+      // If no settings exist, create default settings
+      final defaultSettings = SettingsModel(
+        lateTime: '09:00:00',
+        workingStartTime: '09:00:00',
+        gracePeriodMinutes: 0,
+        isSystemGeneratedIdEnabled: true,
+        idFormat: 'DEPTYYMMDD###',
+        isBiometricEnabled: false,
+        isDualAuthEnabled: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      await insertSettings(defaultSettings);
+      return defaultSettings;
+    } catch (e) {
+      print('Error getting settings: $e');
+      // If there's an error, try to create the settings table and default settings
+      try {
+        final db = await instance.database;
+        // Try to create settings table if it doesn't exist
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS settings(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lateTime TEXT NOT NULL DEFAULT '09:00:00',
+            workingStartTime TEXT NOT NULL DEFAULT '09:00:00',
+            gracePeriodMinutes INTEGER NOT NULL DEFAULT 0,
+            isSystemGeneratedIdEnabled INTEGER NOT NULL DEFAULT 1, -- 0 = false, 1 = true
+            idFormat TEXT NOT NULL DEFAULT 'DEPTYYMMDD###',
+            isBiometricEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+            isDualAuthEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+        
+        // Create default settings
+        final defaultSettings = SettingsModel(
+          lateTime: '09:00:00',
+          workingStartTime: '09:00:00',
+          gracePeriodMinutes: 0,
+          isSystemGeneratedIdEnabled: true,
+          idFormat: 'DEPTYYMMDD###',
+          isBiometricEnabled: false,
+          isDualAuthEnabled: false,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        
+        await insertSettings(defaultSettings);
+        return defaultSettings;
+      } catch (e2) {
+        print('Error creating default settings: $e2');
+        return null;
+      }
     }
-    
-    // If no settings exist, create default settings
-    final defaultSettings = SettingsModel(
-      lateTime: '09:00:00',
-      workingStartTime: '09:00:00',
-      gracePeriodMinutes: 0,
-      isSystemGeneratedIdEnabled: true,
-      idFormat: 'DEPTYYMMDD###',
-      isBiometricEnabled: false,
-      isDualAuthEnabled: false,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    
-    await insertSettings(defaultSettings);
-    return defaultSettings;
   }
 
   Future<int> updateSettings(SettingsModel settings) async {
