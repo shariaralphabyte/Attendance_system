@@ -85,6 +85,7 @@ class AttendanceModel {
   }
 
   bool get isLate {
+    // This will be updated to use configurable settings
     try {
       final checkIn = DateTime.parse('${date}T$checkInTime');
       final standardTime = DateTime.parse('${date}T09:00:00'); // 9 AM standard

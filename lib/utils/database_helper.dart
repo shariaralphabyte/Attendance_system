@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/user_model.dart';
 import '../models/attendance_model.dart';
+import '../models/settings_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -39,6 +40,7 @@ class DatabaseHelper {
         position TEXT NOT NULL,
         phone TEXT,
         profileImage TEXT,
+        isSystemGenerated INTEGER DEFAULT 0, -- 0 = false, 1 = true
         createdAt TEXT NOT NULL
       )
     ''');
@@ -55,6 +57,22 @@ class DatabaseHelper {
         createdAt TEXT NOT NULL,
         FOREIGN KEY (employeeId) REFERENCES users (employeeId),
         UNIQUE(employeeId, date)
+      )
+    ''');
+
+    // Settings table
+    await db.execute('''
+      CREATE TABLE settings(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lateTime TEXT NOT NULL DEFAULT '09:00:00',
+        workingStartTime TEXT NOT NULL DEFAULT '09:00:00',
+        gracePeriodMinutes INTEGER NOT NULL DEFAULT 0,
+        isSystemGeneratedIdEnabled INTEGER NOT NULL DEFAULT 1, -- 0 = false, 1 = true
+        idFormat TEXT NOT NULL DEFAULT 'DEPTYYMMDD###',
+        isBiometricEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+        isDualAuthEnabled INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
       )
     ''');
 
@@ -205,6 +223,51 @@ class DatabaseHelper {
     );
 
     return maps;
+  }
+
+  // Settings CRUD Operations
+  Future<int> insertSettings(SettingsModel settings) async {
+    final db = await instance.database;
+    try {
+      return await db.insert('settings', settings.toMap());
+    } catch (e) {
+      throw Exception('Failed to insert settings: $e');
+    }
+  }
+
+  Future<SettingsModel?> getSettings() async {
+    final db = await instance.database;
+    final maps = await db.query('settings', limit: 1);
+    
+    if (maps.isNotEmpty) {
+      return SettingsModel.fromMap(maps.first);
+    }
+    
+    // If no settings exist, create default settings
+    final defaultSettings = SettingsModel(
+      lateTime: '09:00:00',
+      workingStartTime: '09:00:00',
+      gracePeriodMinutes: 0,
+      isSystemGeneratedIdEnabled: true,
+      idFormat: 'DEPTYYMMDD###',
+      isBiometricEnabled: false,
+      isDualAuthEnabled: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    
+    await insertSettings(defaultSettings);
+    return defaultSettings;
+  }
+
+  Future<int> updateSettings(SettingsModel settings) async {
+    final db = await instance.database;
+    return await db.update(
+      'settings',
+      settings.copyWith(updatedAt: DateTime.now()).toMap(),
+      where: 'id = ?',
+      whereArgs: [settings.id],
+    );
   }
 
   Future close() async {

@@ -7,6 +7,7 @@ import '../models/user_model.dart';
 import 'add_user_screen.dart';
 import 'attendance_list_screen.dart';
 import 'qr_scanner_screen.dart';
+import 'settings_screen.dart';
 import 'user_list_screen.dart';
 import '../widgets/permission_dialog.dart';
 import '../widgets/stats_card.dart';
@@ -226,6 +227,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             IconButton(
               onPressed: _loadDashboardData,
               icon: const Icon(Icons.refresh, color: Colors.white),
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                ).then((_) => _loadDashboardData());
+              },
+              icon: const Icon(Icons.settings, color: Colors.white),
             ),
           ],
         ),

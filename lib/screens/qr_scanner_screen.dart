@@ -4,6 +4,8 @@ import 'package:ultra_qr_scanner/ultra_qr_scanner_widget.dart';
 import '../utils/app_theme.dart';
 import '../utils/database_helper.dart';
 import '../models/attendance_model.dart';
+import '../models/settings_model.dart';
+import '../models/user_model.dart';
 import '../widgets/success_dialog.dart';
 
 class QRScannerScreen extends StatefulWidget {
@@ -46,7 +48,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     _pulseController.repeat(reverse: true);
   }
 
-  Future<void> _handleQRDetected(String qrCode , String type) async {
+  Future<void> _handleQRDetected(String qrCode, String type) async {
     final now = DateTime.now();
 
     // Prevent duplicate or too frequent scans (2 seconds cooldown)
@@ -70,6 +72,32 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       final user = await DatabaseHelper.instance.getUserByEmployeeId(employeeId);
       if (user == null) {
         _showErrorDialog('Employee not found', 'No employee found with ID: $employeeId');
+        return;
+      }
+
+      // Check if biometric authentication is required
+      final settings = await DatabaseHelper.instance.getSettings();
+      final isBiometricRequired = settings?.isBiometricEnabled ?? false;
+      final isDualAuthRequired = settings?.isDualAuthEnabled ?? false;
+
+      // If dual authentication is enabled, we need both QR and biometric
+      if (isDualAuthRequired) {
+        // Navigate to biometric authentication screen
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BiometricAuthScreen(
+                user: user,
+                onAttendanceMarked: widget.onAttendanceMarked,
+              ),
+            ),
+          ).then((_) {
+            setState(() {
+              _isProcessing = false;
+            });
+          });
+        }
         return;
       }
 
@@ -102,8 +130,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
     final date = now.toIso8601String().split('T')[0];
 
-    // Determine status (Present or Late - assuming 9:00 AM is standard)
-    final standardTime = DateTime.parse('${date}T09:00:00');
+    // Get settings for configurable late time
+    final settings = await DatabaseHelper.instance.getSettings();
+    final lateTime = settings?.lateTime ?? '09:00:00';
+    
+    // Determine status (Present or Late - using configurable time)
+    final standardTime = DateTime.parse('${date}T$lateTime');
     final currentTime = DateTime.parse('${date}T$time');
     final status = currentTime.isAfter(standardTime) ? 'Late' : 'Present';
 

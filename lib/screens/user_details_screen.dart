@@ -6,6 +6,7 @@ import '../utils/database_helper.dart';
 import '../models/user_model.dart';
 import '../models/attendance_model.dart';
 import 'add_user_screen.dart';
+import 'biometric_registration_screen.dart';
 import 'qr_code_display_screen.dart';
 
 class UserDetailsScreen extends StatefulWidget {
@@ -130,6 +131,16 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                       Icon(Icons.qr_code, size: 20),
                       SizedBox(width: 8),
                       Text('View QR Code'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'biometric',
+                  child: Row(
+                    children: [
+                      Icon(Icons.fingerprint, size: 20),
+                      SizedBox(width: 8),
+                      Text('Register Biometric'),
                     ],
                   ),
                 ),
@@ -676,6 +687,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
           context,
           MaterialPageRoute(
             builder: (context) => QRCodeDisplayScreen(user: widget.user),
+          ),
+        );
+        break;
+      case 'biometric':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BiometricRegistrationScreen(user: widget.user),
           ),
         );
         break;

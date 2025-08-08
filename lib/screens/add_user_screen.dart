@@ -28,6 +28,7 @@ class _AddUserScreenState extends State<AddUserScreen>
   String _selectedPosition = 'Software Engineer';
   File? _selectedImage;
   bool _isLoading = false;
+  bool _isEditingExistingUser = false; // Flag to check if we're editing an existing user
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -91,6 +92,10 @@ class _AddUserScreenState extends State<AddUserScreen>
       _phoneController.text = user.phone ?? '';
       _selectedDepartment = user.department;
       _selectedPosition = user.position;
+      _isEditingExistingUser = true; // Set flag when editing existing user
+    } else {
+      // For new users, generate ID automatically if enabled in settings
+      _generateEmployeeId();
     }
   }
 
@@ -160,6 +165,11 @@ class _AddUserScreenState extends State<AddUserScreen>
   }
 
   Future<void> _generateEmployeeId() async {
+    // If editing existing user with system-generated ID, don't regenerate
+    if (_isEditingExistingUser && widget.user?.isSystemGenerated == true) {
+      return;
+    }
+    
     final now = DateTime.now();
     final timestamp =
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.millisecond}';
@@ -179,6 +189,9 @@ class _AddUserScreenState extends State<AddUserScreen>
     });
 
     try {
+      // Determine if this is a system-generated ID
+      final isSystemGenerated = widget.user == null || widget.user?.isSystemGenerated == true;
+      
       final user = UserModel(
         id: widget.user?.id,
         employeeId: _employeeIdController.text.trim(),
@@ -190,6 +203,7 @@ class _AddUserScreenState extends State<AddUserScreen>
             ? null
             : _phoneController.text.trim(),
         profileImage: _selectedImage?.path,
+        isSystemGenerated: isSystemGenerated, // Set the isSystemGenerated flag
         createdAt: widget.user?.createdAt ?? DateTime.now().toIso8601String(),
       );
 
@@ -404,17 +418,24 @@ class _AddUserScreenState extends State<AddUserScreen>
   }
 
   Widget _buildFormFields() {
+    // Determine if employee ID field should be disabled
+    final isEmployeeIdDisabled = _isEditingExistingUser && widget.user?.isSystemGenerated == true;
+    
     return Column(
       children: [
         TextFormField(
           controller: _employeeIdController,
+          enabled: !isEmployeeIdDisabled, // Disable if editing system-generated ID
           decoration: InputDecoration(
             labelText: 'Employee ID',
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _generateEmployeeId,
-              tooltip: 'Generate ID',
-            ),
+            suffixIcon: isEmployeeIdDisabled
+              ? const Icon(Icons.lock, color: Colors.grey) // Show lock icon for disabled field
+              : IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _generateEmployeeId,
+                  tooltip: 'Generate ID',
+                ),
+            hintText: isEmployeeIdDisabled ? 'System-generated ID (cannot be changed)' : null,
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
