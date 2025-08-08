@@ -41,13 +41,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _gracePeriodController.text = _settings.gracePeriodMinutes.toString();
           _idFormatController.text = _settings.idFormat;
         });
+      } else {
+        // If settings is null, show error and create default settings
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error loading settings. Creating default settings...'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        
+        // Try to create default settings
+        await _createDefaultSettings();
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading settings: $e')),
+        SnackBar(
+          content: Text('Error loading settings: $e'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+  }
+  
+  Future<void> _createDefaultSettings() async {
+    try {
+      final defaultSettings = SettingsModel(
+        lateTime: '09:00:00',
+        workingStartTime: '09:00:00',
+        gracePeriodMinutes: 0,
+        isSystemGeneratedIdEnabled: true,
+        idFormat: 'DEPTYYMMDD###',
+        isBiometricEnabled: false,
+        isDualAuthEnabled: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      await DatabaseHelper.instance.insertSettings(defaultSettings);
+      
+      setState(() {
+        _settings = defaultSettings;
+        
+        // Initialize controllers with default settings
+        _lateTimeController.text = _settings.lateTime;
+        _workingStartTimeController.text = _settings.workingStartTime;
+        _gracePeriodController.text = _settings.gracePeriodMinutes.toString();
+        _idFormatController.text = _settings.idFormat;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Default settings created successfully'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create default settings: $e'),
+          backgroundColor: AppTheme.errorColor,
+        ),
       );
     }
   }

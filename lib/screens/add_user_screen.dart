@@ -219,7 +219,8 @@ class _AddUserScreenState extends State<AddUserScreen>
         _showQRCodeDialog(user);
       }
     } catch (e) {
-      String errorMessage = 'Failed to save employee';
+      print('Error saving user: $e');
+      String errorMessage = 'Failed to save employee: ${e.toString()}';
       if (e.toString().contains('UNIQUE constraint failed')) {
         errorMessage = 'Employee ID already exists. Please use a different ID.';
       }
