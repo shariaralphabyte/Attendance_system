@@ -6,11 +6,9 @@ import '../utils/database_helper.dart';
 import '../models/user_model.dart';
 import 'add_user_screen.dart';
 import 'attendance_list_screen.dart';
-import 'biometric_auth_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'settings_screen.dart';
 import 'user_list_screen.dart';
-import '../utils/database_helper.dart';
 import '../widgets/permission_dialog.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/quick_action_card.dart';
@@ -185,36 +183,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
 
-    // For now, we'll just use the first user as an example
-    // In a real implementation, you would show a user selection dialog
-    final user = users.first;
 
-    if (mounted) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, _) => BiometricAuthScreen(
-            user: user,
-            onAttendanceMarked: _loadDashboardData,
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(0.0, 1.0);
-            const end = Offset.zero;
-            const curve = Curves.easeInOut;
-
-            var tween = Tween(
-              begin: begin,
-              end: end,
-            ).chain(CurveTween(curve: curve));
-
-            return SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            );
-          },
-        ),
-      );
-    }
   }
 
   @override
@@ -432,13 +401,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               icon: Icons.qr_code_scanner,
               gradient: AppTheme.primaryGradient,
               onTap: _checkCameraPermission,
-            ),
-            QuickActionCard(
-              title: 'Biometric Auth',
-              subtitle: 'Mark attendance',
-              icon: Icons.fingerprint,
-              gradient: AppTheme.accentGradient,
-              onTap: _navigateToBiometricAuth,
             ),
             QuickActionCard(
               title: 'Add User',

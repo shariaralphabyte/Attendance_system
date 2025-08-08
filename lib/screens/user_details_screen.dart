@@ -6,7 +6,6 @@ import '../utils/database_helper.dart';
 import '../models/user_model.dart';
 import '../models/attendance_model.dart';
 import 'add_user_screen.dart';
-import 'biometric_registration_screen.dart';
 import 'qr_code_display_screen.dart';
 
 class UserDetailsScreen extends StatefulWidget {
@@ -42,23 +41,21 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
 
     _animationController.forward();
   }
 
   Future<void> _loadData() async {
     try {
-      final attendance = await DatabaseHelper.instance
-          .getAttendanceByEmployee(widget.user.employeeId);
-      final stats = await DatabaseHelper.instance
-          .getAttendanceStats(widget.user.employeeId);
+      final attendance = await DatabaseHelper.instance.getAttendanceByEmployee(
+        widget.user.employeeId,
+      );
+      final stats = await DatabaseHelper.instance.getAttendanceStats(
+        widget.user.employeeId,
+      );
 
       setState(() {
         _attendanceRecords = attendance;
@@ -69,9 +66,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
     }
   }
 
@@ -107,9 +104,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
           floating: false,
           pinned: true,
           backgroundColor: AppTheme.primaryColor,
-          flexibleSpace: FlexibleSpaceBar(
-            background: _buildProfileHeader(),
-          ),
+          flexibleSpace: FlexibleSpaceBar(background: _buildProfileHeader()),
           actions: [
             PopupMenuButton<String>(
               onSelected: _handleMenuAction,
@@ -170,10 +165,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
         SliverFillRemaining(
           child: TabBarView(
             controller: _tabController,
-            children: [
-              _buildOverviewTab(),
-              _buildAttendanceTab(),
-            ],
+            children: [_buildOverviewTab(), _buildAttendanceTab()],
           ),
         ),
       ],
@@ -182,9 +174,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
 
   Widget _buildProfileHeader() {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-      ),
+      decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -192,7 +182,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 60), // Space for app bar
-
               // Profile Image
               Container(
                 width: 120,
@@ -210,24 +199,24 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                 ),
                 child: widget.user.profileImage != null
                     ? ClipOval(
-                  child: Image.file(
-                    File(widget.user.profileImage!),
-                    fit: BoxFit.cover,
-                    width: 120,
-                    height: 120,
-                  ),
-                )
+                        child: Image.file(
+                          File(widget.user.profileImage!),
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                        ),
+                      )
                     : Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 60,
-                  ),
-                ),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 60,
+                        ),
+                      ),
               ),
 
               const SizedBox(height: 20),
@@ -322,8 +311,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
               _buildInfoRow(Icons.phone, 'Phone', widget.user.phone!),
             _buildInfoRow(Icons.business, 'Department', widget.user.department),
             _buildInfoRow(Icons.work, 'Position', widget.user.position),
-            _buildInfoRow(Icons.calendar_today, 'Joined',
-                DateTime.parse(widget.user.createdAt).toString().split(' ')[0]),
+            _buildInfoRow(
+              Icons.calendar_today,
+              'Joined',
+              DateTime.parse(widget.user.createdAt).toString().split(' ')[0],
+            ),
           ],
         ),
       ),
@@ -335,11 +327,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AppTheme.primaryColor,
-          ),
+          Icon(icon, size: 20, color: AppTheme.primaryColor),
           const SizedBox(width: 12),
           Text(
             '$label: ',
@@ -352,10 +340,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textPrimary,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
             ),
           ),
         ],
@@ -426,7 +411,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -488,11 +478,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
               child: Center(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.history,
-                      size: 48,
-                      color: Colors.grey.shade400,
-                    ),
+                    Icon(Icons.history, size: 48, color: Colors.grey.shade400),
                     const SizedBox(height: 8),
                     Text(
                       'No attendance records yet',
@@ -507,7 +493,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
             ),
           )
         else
-          ...recentAttendance.map((attendance) => _buildAttendanceCard(attendance)),
+          ...recentAttendance.map(
+            (attendance) => _buildAttendanceCard(attendance),
+          ),
       ],
     );
   }
@@ -520,45 +508,44 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
     return Column(
       children: [
         // Filter options could go here
-
         Expanded(
           child: _attendanceRecords.isEmpty
               ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.history,
-                  size: 64,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No attendance records',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey.shade600,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.history,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No attendance records',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Attendance records will appear here once scanning begins',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Attendance records will appear here once scanning begins',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          )
+                )
               : ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: _attendanceRecords.length,
-            itemBuilder: (context, index) {
-              return _buildAttendanceCard(_attendanceRecords[index]);
-            },
-          ),
+                  padding: const EdgeInsets.all(20),
+                  itemCount: _attendanceRecords.length,
+                  itemBuilder: (context, index) {
+                    return _buildAttendanceCard(_attendanceRecords[index]);
+                  },
+                ),
         ),
       ],
     );
@@ -632,7 +619,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -690,14 +680,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
           ),
         );
         break;
-      case 'biometric':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BiometricRegistrationScreen(user: widget.user),
-          ),
-        );
-        break;
     }
   }
 }
@@ -709,15 +691,17 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get minExtent => tabBar.preferredSize.height;
+
   @override
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppTheme.backgroundColor,
-      child: tabBar,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppTheme.backgroundColor, child: tabBar);
   }
 
   @override

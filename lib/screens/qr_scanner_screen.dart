@@ -4,10 +4,7 @@ import 'package:ultra_qr_scanner/ultra_qr_scanner_widget.dart';
 import '../utils/app_theme.dart';
 import '../utils/database_helper.dart';
 import '../models/attendance_model.dart';
-import '../models/settings_model.dart';
-import '../models/user_model.dart';
 import '../widgets/success_dialog.dart';
-import 'biometric_auth_screen.dart';
 
 class QRScannerScreen extends StatefulWidget {
   final VoidCallback? onAttendanceMarked;
@@ -76,32 +73,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         return;
       }
 
-      // Check if biometric authentication is required
-      final settings = await DatabaseHelper.instance.getSettings();
-      final isBiometricRequired = settings?.isBiometricEnabled ?? false;
-      final isDualAuthRequired = settings?.isDualAuthEnabled ?? false;
-
-      // If dual authentication is enabled, we need both QR and biometric
-      if (isDualAuthRequired) {
-        // Navigate to biometric authentication screen with dual auth flag
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BiometricAuthScreen(
-                user: user,
-                onAttendanceMarked: widget.onAttendanceMarked,
-                isDualAuth: true,
-              ),
-            ),
-          ).then((_) {
-            setState(() {
-              _isProcessing = false;
-            });
-          });
-        }
-        return;
-      }
 
       final today = DateTime.now().toIso8601String().split('T')[0];
       final existingAttendance = await DatabaseHelper.instance.getAttendanceByDate(employeeId, today);

@@ -281,41 +281,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       hint: 'Format for auto-generated IDs (e.g., DEPTYYMMDD###)',
                     ),
 
-                    const SizedBox(height: 30),
-
-                    // Security Settings Section
-                    _buildSectionHeader('Security Settings'),
-                    const SizedBox(height: 16),
-                    
-                    SwitchListTile(
-                      title: const Text('Enable Biometric Authentication'),
-                      subtitle: const Text('Require biometric verification for attendance'),
-                      value: _settings.isBiometricEnabled,
-                      onChanged: (value) {
-                        setState(() {
-                          _settings = _settings.copyWith(
-                            isBiometricEnabled: value,
-                          );
-                        });
-                      },
-                      activeColor: AppTheme.primaryColor,
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    SwitchListTile(
-                      title: const Text('Enable Dual Authentication'),
-                      subtitle: const Text('Require both QR code and biometric verification'),
-                      value: _settings.isDualAuthEnabled,
-                      onChanged: (value) {
-                        setState(() {
-                          _settings = _settings.copyWith(
-                            isDualAuthEnabled: value,
-                          );
-                        });
-                      },
-                      activeColor: AppTheme.primaryColor,
-                    ),
 
                     const SizedBox(height: 40),
 
