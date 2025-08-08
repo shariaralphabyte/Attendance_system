@@ -1,13 +1,10 @@
-// screens/biometric_auth_screen.dart
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import '../utils/app_theme.dart';
 import '../services/biometric_service.dart';
 import '../models/user_model.dart';
 import '../models/attendance_model.dart';
 import '../utils/database_helper.dart';
 import '../widgets/success_dialog.dart';
-import 'qr_scanner_screen.dart';
 
 class BiometricAuthScreen extends StatefulWidget {
   final UserModel user;

@@ -7,6 +7,7 @@ import '../models/attendance_model.dart';
 import '../models/settings_model.dart';
 import '../models/user_model.dart';
 import '../widgets/success_dialog.dart';
+import 'biometric_auth_screen.dart';
 
 class QRScannerScreen extends StatefulWidget {
   final VoidCallback? onAttendanceMarked;
