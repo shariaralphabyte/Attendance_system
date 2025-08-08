@@ -1,4 +1,5 @@
 // models/attendance_model.dart
+import '../utils/database_helper.dart';
 class AttendanceModel {
   final int? id;
   final String employeeId;
@@ -85,11 +86,31 @@ class AttendanceModel {
   }
 
   bool get isLate {
-    // This will be updated to use configurable settings
+    // This uses configurable settings with grace period
     try {
       final checkIn = DateTime.parse('${date}T$checkInTime');
-      final standardTime = DateTime.parse('${date}T09:00:00'); // 9 AM standard
+      final standardTime = DateTime.parse('${date}T09:00:00'); // Default standard time
       return checkIn.isAfter(standardTime);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Determines if attendance is late based on settings
+  Future<bool> isLateWithSettings() async {
+    try {
+      // Get settings
+      final settings = await DatabaseHelper.instance.getSettings();
+      final lateTime = settings?.lateTime ?? '09:00:00';
+      final gracePeriodMinutes = settings?.gracePeriodMinutes ?? 0;
+      
+      final checkIn = DateTime.parse('${date}T$checkInTime');
+      final standardTime = DateTime.parse('${date}T$lateTime');
+      
+      // Add grace period to the late time
+      final gracePeriodEndTime = standardTime.add(Duration(minutes: gracePeriodMinutes));
+      
+      return checkIn.isAfter(gracePeriodEndTime);
     } catch (e) {
       return false;
     }

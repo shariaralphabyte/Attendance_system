@@ -12,11 +12,13 @@ import 'qr_scanner_screen.dart';
 class BiometricAuthScreen extends StatefulWidget {
   final UserModel user;
   final VoidCallback? onAttendanceMarked;
+  final bool isDualAuth; // Flag to indicate if this is part of dual authentication
 
   const BiometricAuthScreen({
     super.key,
     required this.user,
     this.onAttendanceMarked,
+    this.isDualAuth = false,
   });
 
   @override
@@ -57,6 +59,13 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
   }
 
   Future<void> _getAuthMessage() async {
+    if (widget.isDualAuth) {
+      setState(() {
+        _authMessage = 'Complete biometric verification to finalize attendance';
+      });
+      return;
+    }
+    
     final String message = await BiometricService.getAuthMessage();
     setState(() {
       _authMessage = message;
@@ -113,14 +122,16 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
       final date = now.toIso8601String().split('T')[0];
 
-      // Get settings for configurable late time
+      // Get settings for configurable late time and grace period
       final settings = await DatabaseHelper.instance.getSettings();
       final lateTime = settings?.lateTime ?? '09:00:00';
+      final gracePeriodMinutes = settings?.gracePeriodMinutes ?? 0;
 
-      // Determine status (Present or Late - using configurable time)
+      // Determine status (Present or Late - using configurable time with grace period)
       final standardTime = DateTime.parse('${date}T$lateTime');
+      final gracePeriodEndTime = standardTime.add(Duration(minutes: gracePeriodMinutes));
       final currentTime = DateTime.parse('${date}T$time');
-      final status = currentTime.isAfter(standardTime) ? 'Late' : 'Present';
+      final status = currentTime.isAfter(gracePeriodEndTime) ? 'Late' : 'Present';
 
       final attendance = AttendanceModel(
         employeeId: widget.user.employeeId,
@@ -134,8 +145,8 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
 
       if (mounted) {
         _showSuccessDialog(
-          'Attendance Marked',
-          '${widget.user.name} has been marked ${status.toLowerCase()} at $time',
+          widget.isDualAuth ? 'Dual Authentication Complete' : 'Attendance Marked',
+          '${widget.user.name} has been marked ${status.toLowerCase()} at $time${widget.isDualAuth ? ' (QR + Biometric verified)' : ''}',
           'check_in',
           {
             'name': widget.user.name,
@@ -231,7 +242,9 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Authenticate to mark attendance',
+                          widget.isDualAuth
+                            ? 'Scan your fingerprint or face to complete dual authentication'
+                            : 'Authenticate to mark attendance',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -340,7 +353,9 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
                 ),
               ),
               child: Text(
-                _authMessage,
+                widget.isDualAuth
+                  ? 'Please complete biometric verification to finalize your attendance'
+                  : _authMessage,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,

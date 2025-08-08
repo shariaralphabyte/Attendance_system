@@ -54,8 +54,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     // Prevent duplicate or too frequent scans (2 seconds cooldown)
     if (_isProcessing ||
         (_lastScanTime != null &&
-            now.difference(_lastScanTime!) < const Duration(seconds: 2)) &&
-            _lastScannedCode == qrCode) {
+            now.difference(_lastScanTime!) < const Duration(seconds: 2) &&
+            _lastScannedCode == qrCode)) {
       return;
     }
 
@@ -82,7 +82,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
       // If dual authentication is enabled, we need both QR and biometric
       if (isDualAuthRequired) {
-        // Navigate to biometric authentication screen
+        // Navigate to biometric authentication screen with dual auth flag
         if (mounted) {
           Navigator.push(
             context,
@@ -90,6 +90,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
               builder: (context) => BiometricAuthScreen(
                 user: user,
                 onAttendanceMarked: widget.onAttendanceMarked,
+                isDualAuth: true,
               ),
             ),
           ).then((_) {
@@ -130,14 +131,16 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
     final date = now.toIso8601String().split('T')[0];
 
-    // Get settings for configurable late time
+    // Get settings for configurable late time and grace period
     final settings = await DatabaseHelper.instance.getSettings();
     final lateTime = settings?.lateTime ?? '09:00:00';
+    final gracePeriodMinutes = settings?.gracePeriodMinutes ?? 0;
     
-    // Determine status (Present or Late - using configurable time)
+    // Determine status (Present or Late - using configurable time with grace period)
     final standardTime = DateTime.parse('${date}T$lateTime');
+    final gracePeriodEndTime = standardTime.add(Duration(minutes: gracePeriodMinutes));
     final currentTime = DateTime.parse('${date}T$time');
-    final status = currentTime.isAfter(standardTime) ? 'Late' : 'Present';
+    final status = currentTime.isAfter(gracePeriodEndTime) ? 'Late' : 'Present';
 
     final attendance = AttendanceModel(
       employeeId: employeeId,
