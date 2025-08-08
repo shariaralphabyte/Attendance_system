@@ -217,19 +217,19 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
                 gradient: AppTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.fingerprint,
                     color: Colors.white,
                     size: 32,
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Biometric Authentication',
                           style: TextStyle(
                             color: Colors.white,
@@ -237,12 +237,12 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           widget.isDualAuth
                             ? 'Scan your fingerprint or face to complete dual authentication'
                             : 'Authenticate to mark attendance',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
                           ),

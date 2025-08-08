@@ -45,21 +45,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
+          ),
+        );
 
     _animationController.forward();
   }
@@ -83,9 +82,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
     }
   }
 
@@ -107,7 +106,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       barrierDismissible: false,
       builder: (context) => PermissionDialog(
         title: 'Camera Permission Required',
-        message: 'This app needs camera access to scan QR codes for attendance marking.',
+        message:
+            'This app needs camera access to scan QR codes for attendance marking.',
         onGranted: () async {
           final status = await Permission.camera.request();
           if (status.isGranted) {
@@ -148,17 +148,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, _) => QRScannerScreen(
-          onAttendanceMarked: _loadDashboardData,
-        ),
+        pageBuilder: (context, animation, _) =>
+            QRScannerScreen(onAttendanceMarked: _loadDashboardData),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;
           const curve = Curves.easeInOut;
 
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
 
           return SlideTransition(
             position: animation.drive(tween),
@@ -167,54 +167,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
       ),
     );
- }
+  }
 
- void _navigateToBiometricAuth() async {
-   // Get all users to allow selection
-   final users = await DatabaseHelper.instance.getAllUsers();
-   
-   if (users.isEmpty) {
-     if (mounted) {
-       ScaffoldMessenger.of(context).showSnackBar(
-         const SnackBar(
-           content: Text('No employees found. Please add employees first.'),
-           backgroundColor: AppTheme.errorColor,
-         ),
-       );
-     }
-     return;
-   }
-   
-   // For now, we'll just use the first user as an example
-   // In a real implementation, you would show a user selection dialog
-   final user = users.first;
-   
-   if (mounted) {
-     Navigator.push(
-       context,
-       PageRouteBuilder(
-         pageBuilder: (context, animation, _) => BiometricAuthScreen(
-           user: user,
-           onAttendanceMarked: _loadDashboardData,
-         ),
-         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-           const begin = Offset(0.0, 1.0);
-           const end = Offset.zero;
-           const curve = Curves.easeInOut;
-           
-           var tween = Tween(begin: begin, end: end).chain(
-             CurveTween(curve: curve),
-           );
-           
-           return SlideTransition(
-             position: animation.drive(tween),
-             child: child,
-           );
-         },
-       ),
-     );
-   }
- }
+  void _navigateToBiometricAuth() async {
+    // Get all users to allow selection
+    final users = await DatabaseHelper.instance.getAllUsers();
+
+    if (users.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No employees found. Please add employees first.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+      return;
+    }
+
+    // For now, we'll just use the first user as an example
+    // In a real implementation, you would show a user selection dialog
+    final user = users.first;
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, _) => BiometricAuthScreen(
+            user: user,
+            onAttendanceMarked: _loadDashboardData,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+
+            var tween = Tween(
+              begin: begin,
+              end: end,
+            ).chain(CurveTween(curve: curve));
+
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            );
+          },
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -244,9 +245,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildContent() {
     if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return CustomScrollView(
@@ -281,7 +280,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
                 ).then((_) => _loadDashboardData());
               },
               icon: const Icon(Icons.settings, color: Colors.white),
@@ -357,11 +358,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.waving_hand,
-              size: 32,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.waving_hand, size: 32, color: Colors.white),
           ),
         ],
       ),
@@ -464,19 +461,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 context,
                 MaterialPageRoute(builder: (context) => const UserListScreen()),
               ),
-           QuickActionCard(
-             title: 'Attendance Log',
-             subtitle: 'View all records',
-             icon: Icons.history,
-             gradient: LinearGradient(
-               colors: [Colors.orange.shade400, Colors.orange.shade600],
-             ),
-             onTap: () => Navigator.push(
-               context,
-               MaterialPageRoute(builder: (context) => const AttendanceListScreen()),
-             ),
-           ),
-         ],
+            ),
+            QuickActionCard(
+              title: 'Attendance Log',
+              subtitle: 'View all records',
+              icon: Icons.history,
+              gradient: LinearGradient(
+                colors: [Colors.orange.shade400, Colors.orange.shade600],
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AttendanceListScreen(),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
